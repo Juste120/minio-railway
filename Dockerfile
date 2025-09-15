@@ -1,8 +1,5 @@
 FROM minio/minio:latest
 
-# Installer outils pour monitoring
-RUN apk add --no-cache coreutils bash
-
 # Exposer les ports
 EXPOSE 9000 9001
 
@@ -10,11 +7,15 @@ EXPOSE 9000 9001
 ENV MINIO_CONSOLE_ADDRESS=":9001"
 
 # Créer répertoire data
+USER root
 RUN mkdir -p /data && chmod 755 /data
 
-# Health check
+# Health check simple sans curl
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:9000/minio/health/live || exit 1
+    CMD pgrep minio || exit 1
+
+# Revenir à l'utilisateur minio
+USER minio
 
 # Commande de démarrage
 CMD ["minio", "server", "/data", "--console-address", ":9001"]
